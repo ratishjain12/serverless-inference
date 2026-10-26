@@ -108,4 +108,4 @@ With no jobs running, the compute cost is zero: there are no instances, and the 
 terraform -chdir=infra destroy
 ```
 
-S3 buckets and the ECR repository must be empty before they can be deleted.
+The buckets and the ECR repository are set to `force_destroy` / `force_delete`, so destroy also permanently deletes every object and image in them, including the uploaded model weights.

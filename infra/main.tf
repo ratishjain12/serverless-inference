@@ -73,14 +73,16 @@ resource "aws_security_group" "inference_sg" {
 
 # s3
 resource "aws_s3_bucket" "data_bucket" {
-  bucket = "${var.project_name}-data-bucket"
+  bucket        = "${var.project_name}-data-bucket"
+  force_destroy = true
   tags = {
     Name = "${var.project_name}-data-bucket"
   }
 }
 
 resource "aws_s3_bucket" "model_bucket" {
-  bucket = "${var.project_name}-model-bucket"
+  bucket        = "${var.project_name}-model-bucket"
+  force_destroy = true
   tags = {
     Name = "${var.project_name}-model-bucket"
   }
@@ -173,6 +175,7 @@ resource "aws_iam_role_policy_attachment" "batch_job_role_policy" {
 resource "aws_ecr_repository" "inference_repo" {
   name                 = "${var.project_name}-inference"
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -200,6 +203,10 @@ resource "aws_batch_compute_environment" "inference_compute_env" {
   name         = "${var.project_name}-compute-env"
   type         = "MANAGED"
   service_role = aws_iam_role.batch_execution_role.arn
+
+  # The service role must keep its policy until the environment is deleted,
+  # otherwise Batch can't clean up and the environment is stuck INVALID.
+  depends_on = [aws_iam_role_policy_attachment.batch_execution_role_policy]
 
   compute_resources {
     type               = "FARGATE_SPOT"
